@@ -1,0 +1,415 @@
+-- CloutHub // Ride A Pet: Macro with Pause/Resume (by nami)
+local CoreGui = game:GetService("CoreGui")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local RunService = game:GetService("RunService")
+local HttpService = game:GetService("HttpService")
+
+if CoreGui:FindFirstChild("CloutHubPauseMacro") then
+    CoreGui.CloutHubPauseMacro:Destroy()
+end
+
+-- Folder & File Setup for Delta Executor
+local FolderName = "CloutHub_RideAPet_Macros"
+if writefile and not isfolder(FolderName) then
+    makefolder(FolderName)
+end
+
+local ScreenGui = Instance.new("ScreenGui", CoreGui)
+ScreenGui.Name = "CloutHubPauseMacro"
+ScreenGui.ResetOnSpawn = false
+
+-- ==================== 1. KEY SYSTEM UI ====================
+local KeyFrame = Instance.new("Frame", ScreenGui)
+KeyFrame.Size = UDim2.new(0, 240, 0, 130)
+KeyFrame.Position = UDim2.new(0.5, -120, 0.5, -65)
+KeyFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+KeyFrame.Active = true
+KeyFrame.Draggable = true
+Instance.new("UICorner", KeyFrame).CornerRadius = UDim.new(0, 8)
+
+local KeyBox = Instance.new("TextBox", KeyFrame)
+KeyBox.Size = UDim2.new(0.9, 0, 0, 35)
+KeyBox.Position = UDim2.new(0.05, 0, 0, 35)
+KeyBox.BackgroundColor3 = Color3.fromRGB(25, 25, 32)
+KeyBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+KeyBox.Text = "nami@12"
+KeyBox.TextSize = 11
+Instance.new("UICorner", KeyBox).CornerRadius = UDim.new(0, 6)
+
+local SubmitBtn = Instance.new("TextButton", KeyFrame)
+SubmitBtn.Size = UDim2.new(0.9, 0, 0, 35)
+SubmitBtn.Position = UDim2.new(0.05, 0, 0, 80)
+SubmitBtn.BackgroundColor3 = Color3.fromRGB(0, 140, 70)
+SubmitBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+SubmitBtn.Text = "LOGIN"
+SubmitBtn.TextSize = 11
+SubmitBtn.Font = Enum.Font.GothamBold
+Instance.new("UICorner", SubmitBtn).CornerRadius = UDim.new(0, 6)
+
+-- ==================== 2. MAIN MENU UI ====================
+local ToggleBtn = Instance.new("TextButton", ScreenGui)
+ToggleBtn.Size = UDim2.new(0, 35, 0, 35)
+ToggleBtn.Position = UDim2.new(0, 15, 0, 140)
+ToggleBtn.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+ToggleBtn.TextColor3 = Color3.fromRGB(255, 170, 0)
+ToggleBtn.Text = "N"
+ToggleBtn.TextSize = 12
+ToggleBtn.Draggable = true
+ToggleBtn.Visible = false
+Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(0, 6)
+
+local Panel = Instance.new("Frame", ScreenGui)
+Panel.Size = UDim2.new(0, 240, 0, 325)
+Panel.Position = UDim2.new(0.3, 0, 0.2, 0)
+Panel.BackgroundColor3 = Color3.fromRGB(12, 12, 16)
+Panel.Draggable = true
+Panel.Active = true
+Panel.Visible = false
+Instance.new("UICorner", Panel).CornerRadius = UDim.new(0, 6)
+
+-- Title Header Bar with Close [X] Button
+local TitleBar = Instance.new("TextLabel", Panel)
+TitleBar.Size = UDim2.new(1, 0, 0, 28)
+TitleBar.BackgroundColor3 = Color3.fromRGB(20, 20, 26)
+TitleBar.Text = " CloutHub | Macro + Pause"
+TitleBar.TextColor3 = Color3.fromRGB(255, 170, 0)
+TitleBar.TextSize = 10
+TitleBar.TextXAlignment = Enum.TextXAlignment.Left
+Instance.new("UICorner", TitleBar).CornerRadius = UDim.new(0, 6)
+
+local CloseBtn = Instance.new("TextButton", TitleBar)
+CloseBtn.Size = UDim2.new(0, 24, 0, 24)
+CloseBtn.Position = UDim2.new(1, -26, 0, 2)
+CloseBtn.BackgroundTransparency = 1
+CloseBtn.Text = "X"
+CloseBtn.TextColor3 = Color3.fromRGB(255, 50, 50)
+CloseBtn.TextSize = 10
+CloseBtn.Font = Enum.Font.GothamBold
+
+-- TextBox for Macro Name
+local NameBox = Instance.new("TextBox", Panel)
+NameBox.Size = UDim2.new(0.9, 0, 0, 30)
+NameBox.Position = UDim2.new(0.05, 0, 0, 38)
+NameBox.BackgroundColor3 = Color3.fromRGB(25, 25, 32)
+NameBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+NameBox.PlaceholderText = "Enter Macro Name..."
+NameBox.Text = "FarmRoute1"
+NameBox.TextSize = 10
+Instance.new("UICorner", NameBox).CornerRadius = UDim.new(0, 6)
+
+-- Button 1: Record & Save Macro to File
+local RecordBtn = Instance.new("TextButton", Panel)
+RecordBtn.Size = UDim2.new(0.9, 0, 0, 32)
+RecordBtn.Position = UDim2.new(0.05, 0, 0, 76)
+RecordBtn.BackgroundColor3 = Color3.fromRGB(160, 40, 40)
+RecordBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+RecordBtn.Text = "🔴 Record & Save to File"
+RecordBtn.TextSize = 10
+RecordBtn.Font = Enum.Font.GothamBold
+Instance.new("UICorner", RecordBtn).CornerRadius = UDim.new(0, 6)
+
+-- ScrollingFrame for Saved Macros List
+local MacroListFrame = Instance.new("ScrollingFrame", Panel)
+MacroListFrame.Size = UDim2.new(0.9, 0, 0, 75)
+MacroListFrame.Position = UDim2.new(0.05, 0, 0, 115)
+MacroListFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 24)
+MacroListFrame.CanvasSize = UDim2.new(0, 0, 2, 0)
+MacroListFrame.ScrollBarThickness = 4
+Instance.new("UICorner", MacroListFrame).CornerRadius = UDim.new(0, 6)
+
+local UIListLayout = Instance.new("UIListLayout", MacroListFrame)
+UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+UIListLayout.Padding = UDim.new(0, 4)
+
+-- Speed Button (Toggle 1x, 2x, 3x)
+local SpeedBtn = Instance.new("TextButton", Panel)
+SpeedBtn.Size = UDim2.new(0.9, 0, 0, 28)
+SpeedBtn.Position = UDim2.new(0.05, 0, 0, 198)
+SpeedBtn.BackgroundColor3 = Color3.fromRGB(90, 40, 140)
+SpeedBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+SpeedBtn.Text = "⚡ Play Speed: 1x"
+SpeedBtn.TextSize = 10
+SpeedBtn.Font = Enum.Font.GothamBold
+Instance.new("UICorner", SpeedBtn).CornerRadius = UDim.new(0, 6)
+
+-- Button 2: Play / Pause Macro (Combined Play & Pause)
+local PlayBtn = Instance.new("TextButton", Panel)
+PlayBtn.Size = UDim2.new(0.42, 0, 0, 30)
+PlayBtn.Position = UDim2.new(0.05, 0, 0, 235)
+PlayBtn.BackgroundColor3 = Color3.fromRGB(40, 90, 160)
+PlayBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+PlayBtn.Text = "▶️ Play"
+PlayBtn.TextSize = 10
+PlayBtn.Font = Enum.Font.GothamBold
+Instance.new("UICorner", PlayBtn).CornerRadius = UDim.new(0, 6)
+
+-- Button 3: Delete Selected Macro File
+local DeleteBtn = Instance.new("TextButton", Panel)
+DeleteBtn.Size = UDim2.new(0.42, 0, 0, 30)
+DeleteBtn.Position = UDim2.new(0.53, 0, 0, 235)
+DeleteBtn.BackgroundColor3 = Color3.fromRGB(140, 30, 30)
+DeleteBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+DeleteBtn.Text = "🗑️ Delete"
+DeleteBtn.TextSize = 10
+DeleteBtn.Font = Enum.Font.GothamBold
+Instance.new("UICorner", DeleteBtn).CornerRadius = UDim.new(0, 6)
+
+local StatusTxt = Instance.new("TextLabel", Panel)
+StatusTxt.Size = UDim2.new(0.9, 0, 0, 20)
+StatusTxt.Position = UDim2.new(0.05, 0, 0, 278)
+StatusTxt.BackgroundTransparency = 1
+StatusTxt.TextColor3 = Color3.fromRGB(0, 255, 255)
+StatusTxt.Text = "Status: Ready"
+StatusTxt.TextSize = 9
+
+-- ==================== 3. LOGIN LOGIC ====================
+SubmitBtn.MouseButton1Click:Connect(function()
+    if KeyBox.Text == "nami@12" then
+        KeyFrame:Destroy()
+        ToggleBtn.Visible = true
+        Panel.Visible = true
+    else
+        KeyBox.Text = ""
+        KeyBox.PlaceholderText = "Wrong Key!"
+    end
+end)
+
+-- ==================== 4. MACRO LOGIC WITH PAUSE & RESUME ====================
+local selectedFileName = nil
+local isRecording = false
+local currentRecording = {}
+local recordConn = nil
+local playSpeed = 1
+
+-- Playback state variables
+local isPlaying = false
+local isPaused = false
+local playThread = nil
+local currentIndex = 1
+local loadedPath = {}
+
+-- Speed Toggle Logic
+SpeedBtn.MouseButton1Click:Connect(function()
+    if playSpeed == 1 then
+        playSpeed = 2
+        SpeedBtn.Text = "⚡ Play Speed: 2x (Fast)"
+    elseif playSpeed == 2 then
+        playSpeed = 3
+        SpeedBtn.Text = "⚡ Play Speed: 3x (Super Fast)"
+    else
+        playSpeed = 1
+        SpeedBtn.Text = "⚡ Play Speed: 1x (Normal)"
+    end
+end)
+
+-- Function to load & update list of saved files from device
+local function updateFileList()
+    for _, child in ipairs(MacroListFrame:GetChildren()) do
+        if child:IsA("TextButton") then child:Destroy() end
+    end
+    
+    if not listfiles then return end
+    local files = {}
+    pcall(function()
+        for _, file in ipairs(listfiles(FolderName)) do
+            if file:sub(-5) == ".json" then
+                local name = file:match("([^/]+)$"):gsub("%.json$", "")
+                table.insert(files, name)
+            end
+        end
+    end)
+    
+    local yPos = 0
+    for _, name in ipairs(files) do
+        local btn = Instance.new("TextButton", MacroListFrame)
+        btn.Size = UDim2.new(1, -6, 0, 26)
+        btn.Position = UDim2.new(0, 3, 0, yPos)
+        btn.BackgroundColor3 = (selectedFileName == name) and Color3.fromRGB(0, 120, 60) or Color3.fromRGB(30, 30, 40)
+        btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        btn.Text = "📁 " .. name
+        btn.TextSize = 9
+        btn.Font = Enum.Font.Gotham
+        Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
+        
+        btn.MouseButton1Click:Connect(function()
+            selectedFileName = name
+            StatusTxt.Text = "Selected: " + name -- fixed string concat below
+            StatusTxt.Text = "Selected: " .. name
+            -- Reset playback on new selection
+            isPlaying = false
+            isPaused = false
+            currentIndex = 1
+            PlayBtn.Text = "▶️ Play"
+            PlayBtn.BackgroundColor3 = Color3.fromRGB(40, 90, 160)
+            updateFileList()
+        end)
+        
+        yPos = yPos + 30
+    end
+    MacroListFrame.CanvasSize = UDim2.new(0, 0, 0, yPos)
+end
+
+-- Record & Save to File
+RecordBtn.MouseButton1Click:Connect(function()
+    isRecording = not isRecording
+    if isRecording then
+        currentRecording = {}
+        RecordBtn.Text = "🔴 Recording... (Click to Stop & Save)"
+        RecordBtn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+        StatusTxt.Text = "Status: Recording..."
+        
+        recordConn = RunService.Heartbeat:Connect(function()
+            pcall(function()
+                local char = LocalPlayer.Character
+                if char and char:FindFirstChild("HumanoidRootPart") then
+                    local cf = char.HumanoidRootPart.CFrame
+                    table.insert(currentRecording, {cf:GetComponents()})
+                end
+            end)
+        end)
+    else
+        if recordConn then recordConn:Disconnect() end
+        RecordBtn.Text = "🔴 Record & Save to File"
+        RecordBtn.BackgroundColor3 = Color3.fromRGB(160, 40, 40)
+        
+        local macroName = NameBox.Text
+        if macroName == "" or macroName == "Enter Macro Name..." then
+            macroName = "Macro_" .. (os.time() % 1000)
+        end
+        
+        if #currentRecording > 0 and writefile then
+            pcall(function()
+                local encoded = HttpService:JSONEncode(currentRecording)
+                writefile(FolderName .. "/" .. macroName .. ".json", encoded)
+                selectedFileName = macroName
+                StatusTxt.Text = "Permanently saved '" .. macroName .. "'!"
+                updateFileList()
+            end)
+        else
+            StatusTxt.Text = "Status: Empty or writefile not supported!"
+        end
+    end
+end)
+
+-- Delete Selected File Action
+DeleteBtn.MouseButton1Click:Connect(function()
+    if not selectedFileName or not delfile then
+        StatusTxt.Text = "Status: No file selected!"
+        return
+    end
+    
+    pcall(function()
+        delfile(FolderName .. "/" .. selectedFileName .. ".json")
+        StatusTxt.Text = "Deleted file '" .. selectedFileName .. "'!"
+        selectedFileName = nil
+        isPlaying = false
+        isPaused = false
+        PlayBtn.Text = "▶️ Play"
+        PlayBtn.BackgroundColor3 = Color3.fromRGB(40, 90, 160)
+        updateFileList()
+    end)
+end)
+
+-- Play / Pause / Resume Logic
+PlayBtn.MouseButton1Click:Connect(function()
+    if not selectedFileName or not readfile then
+        StatusTxt.Text = "Status: Please select a file first!"
+        return
+    end
+
+    -- Case 1: If currently playing -> Switch to Pause
+    if isPlaying and not isPaused then
+        isPaused = true
+        PlayBtn.Text = "▶️ Resume"
+        PlayBtn.BackgroundColor3 = Color3.fromRGB(180, 120, 0)
+        StatusTxt.Text = "Status: Paused at frame " .. currentIndex
+        return
+    end
+
+    -- Case 2: If currently paused -> Switch to Resume (Continue playing from currentIndex)
+    if isPlaying and isPaused then
+        isPaused = false
+        PlayBtn.Text = "⏸️ Pause"
+        PlayBtn.BackgroundColor3 = Color3.fromRGB(160, 90, 0)
+        StatusTxt.Text = "Status: Resumed playing..."
+        return
+    end
+
+    -- Case 3: Start fresh playback
+    local filePath = FolderName .. "/" .. selectedFileName .. ".json"
+    if not pcall(function() readfile(filePath) end) then
+        StatusTxt.Text = "Status: File not found!"
+        return
+    end
+
+    pcall(function()
+        loadedPath = HttpService:JSONDecode(readfile(filePath))
+    end)
+
+    if not loadedPath or #loadedPath == 0 then
+        StatusTxt.Text = "Status: Macro file is empty!"
+        return
+    end
+
+    isPlaying = true
+    isPaused = false
+    currentIndex = 1
+    PlayBtn.Text = "⏸️ Pause"
+    PlayBtn.BackgroundColor3 = Color3.fromRGB(160, 90, 0)
+    StatusTxt.Text = "Status: Playing '" .. selectedFileName .. "'..."
+
+    task.spawn(function()
+        pcall(function()
+            local char = LocalPlayer.Character
+            if not char or not char:FindFirstChild("HumanoidRootPart") then 
+                isPlaying = false
+                PlayBtn.Text = "▶️ Play"
+                PlayBtn.BackgroundColor3 = Color3.fromRGB(40, 90, 160)
+                return 
+            end
+            local hrp = char.HumanoidRootPart
+            
+            while currentIndex <= #loadedPath do
+                -- Check if paused
+                while isPaused do
+                    task.wait(0.1)
+                    if not isPlaying then break end
+                end
+
+                if not isPlaying or not hrp.Parent then break end
+
+                local step = 1
+                if playSpeed == 2 then step = 2
+                elseif playSpeed == 3 then step = 3 end
+
+                hrp.CFrame = CFrame.new(unpack(loadedPath[currentIndex]))
+                currentIndex = currentIndex + step
+                
+                task.wait(0.03 / playSpeed)
+            end
+
+            isPlaying = false
+            isPaused = false
+            currentIndex = 1
+            PlayBtn.Text = "▶️ Play"
+            PlayBtn.BackgroundColor3 = Color3.fromRGB(40, 90, 160)
+            StatusTxt.Text = "Status: Playback finished!"
+        end)
+    end)
+end)
+
+-- Toggle Menu Visibility
+ToggleBtn.MouseButton1Click:Connect(function() Panel.Visible = not Panel.Visible end)
+
+-- Close Button Action
+CloseBtn.MouseButton1Click:Connect(function()
+    if recordConn then recordConn:Disconnect() end
+    isPlaying = false
+    ScreenGui:Destroy()
+end)
+
+-- Load existing files on startup
+pcall(function()
+    updateFileList()
+end)
