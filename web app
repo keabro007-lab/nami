@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>NamiTube - Verified & Fixed Player</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+        }
+        body {
+            background-color: #0f0f0f;
+            color: #f1f1f1;
+            font-family: 'Battambang', 'Roboto', sans-serif;
+            overflow-x: hidden;
+            overscroll-behavior-y: none;
+            touch-action: pan-y;
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-5px); }
+        }
+        .mascot-float {
+            animation: float 3s ease-in-out infinite;
+        }
+        #player-container:fullscreen {
+            width: 100vw;
+            height: 100vh;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 0;
+        }
+        #player-container:fullscreen iframe {
+            width: 100vw;
+            height: 85vh;
+        }
+    </style>
+</head>
+<body id="app-body" class="bg-[#0f0f0f] text-white h-screen flex flex-col overflow-hidden">
+
+    <!-- WELCOME MODAL -->
+    <div id="welcome-modal" class="fixed inset-0 bg-black/90 z-[120] hidden flex items-center justify-center p-4">
+        <div class="bg-[#181818] border border-cyan-500/50 w-full max-w-md rounded-2xl p-6 shadow-2xl flex flex-col space-y-4">
+            <div class="flex items-center justify-between border-b border-[#272727] pb-3">
+                <div class="flex items-center space-x-2">
+                    <div class="bg-red-600 text-white p-1.5 rounded-lg flex items-center justify-center w-8 h-8">
+                        <i class="fa-solid fa-play text-xs"></i>
+                    </div>
+                    <h3 class="text-sm font-bold text-white">សួស្តីស្វាគមន៍មកកាន់ NamiTube!</h3>
+                </div>
+                <span class="text-xs font-semibold text-cyan-400 bg-[#222] px-2.5 py-1 rounded-full border border-cyan-500/30">@by nami</span>
+            </div>
+            <p class="text-xs text-gray-300 leading-relaxed">
+                កម្មវិធីទស្សនារឿង និងបង្ហោះវីដេអូសហគមន៍ដែលមើលបានរលូន ១០០% គ្មានពាណិជ្ជកម្មរំខាន។
+            </p>
+            <button id="close-welcome-btn" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white py-2.5 rounded-xl text-xs font-semibold shadow-lg transition mt-2">
+                យល់ព្រម ចាប់ផ្តើមទស្សនា!
+            </button>
+        </div>
+    </div>
+
+    <!-- UPLOAD VIDEO MODAL -->
+    <div id="upload-modal" class="fixed inset-0 bg-black/80 z-[110] hidden flex items-center justify-center p-4">
+        <div class="bg-[#181818] border border-cyan-500/40 w-full max-w-md rounded-2xl p-5 shadow-2xl flex flex-col space-y-4">
+            <div class="flex items-center justify-between border-b border-[#272727] pb-3">
+                <h3 class="text-sm font-bold text-cyan-400 flex items-center">
+                    <i class="fa-solid fa-cloud-arrow-up mr-2"></i> បង្ហោះវីដេអូសហគមន៍ (Global Upload)
+                </h3>
+                <button id="close-upload-modal" class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <p class="text-xs text-gray-300">វីដេអូដែលអ្នកបានផុសនឹងបង្ហាញជូនគ្រប់គ្នាដែលបើក App នេះ៖</p>
+            
+            <div class="space-y-3">
+                <div>
+                    <label class="text-[11px] text-gray-400 mb-1 block">ចំណងជើងវីដេអូ (Title)</label>
+                    <input type="text" id="upload-title" placeholder="បញ្ចូលចំណងជើងវីដេអូ..." class="w-full bg-[#121212] text-white px-3 py-2 rounded-xl border border-[#333] text-xs focus:outline-none focus:border-cyan-500">
+                </div>
+                <div>
+                    <label class="text-[11px] text-gray-400 mb-1 block">ឈ្មោះឆានែល (Channel Name)</label>
+                    <input type="text" id="upload-channel" placeholder="ឈ្មោះរបស់អ្នក ឬឆានែល..." class="w-full bg-[#121212] text-white px-3 py-2 rounded-xl border border-[#333] text-xs focus:outline-none focus:border-cyan-500">
+                </div>
+                <div>
+                    <label class="text-[11px] text-gray-400 mb-1 block">Link YouTube (ឧ. https://youtu.be/...)</label>
+                    <input type="text" id="upload-link" placeholder="ដាក់ Link YouTube វីដេអូ..." class="w-full bg-[#121212] text-white px-3 py-2 rounded-xl border border-red-500/50 text-xs focus:outline-none focus:border-red-500">
+                </div>
+            </div>
+
+            <button id="submit-upload-btn" class="w-full bg-red-600 hover:bg-red-500 text-white py-2.5 rounded-xl text-xs font-semibold shadow-lg transition mt-2">
+                <i class="fa-solid fa-upload mr-1.5"></i> ផុសជូនគ្រប់គ្នាទស្សនា
+            </button>
+        </div>
+    </div>
+
+    <!-- HEADER -->
+    <header class="flex items-center justify-between px-4 py-2.5 bg-[#0f0f0f] border-b border-[#272727] sticky top-0 z-50">
+        <div class="flex items-center space-x-3">
+            <button id="menu-btn" class="text-xl p-1 rounded-full hover:bg-[#272727] transition">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+            <div class="flex items-center space-x-1.5 cursor-pointer" onclick="location.reload();">
+                <div class="bg-red-600 text-white p-1 rounded-lg flex items-center justify-center w-8 h-8">
+                    <i class="fa-solid fa-play text-xs"></i>
+                </div>
+                <span class="font-bold text-lg tracking-tight">NamiTube</span>
+            </div>
+        </div>
+
+        <div class="flex items-center space-x-1.5 bg-[#222222] px-3 py-1 rounded-full border border-cyan-500/30 shadow-sm">
+            <span class="text-xs font-semibold text-cyan-400">@by nami</span>
+            <i class="fa-solid fa-circle-check text-cyan-400 text-xs"></i>
+        </div>
+
+        <div class="flex items-center space-x-2">
+            <button id="timer-toggle-btn" class="bg-[#222] border border-cyan-500/30 px-3 py-1.5 rounded-full text-cyan-400 text-xs font-semibold flex items-center space-x-1.5 hover:bg-[#2e2e2e] transition relative" title="កំណត់ម៉ោងសម្រាក">
+                <i class="fa-solid fa-stopwatch text-sm"></i>
+                <span id="timer-display-text">ម៉ោងសម្រាក</span>
+            </button>
+            <button id="search-toggle" class="p-2 hover:bg-[#272727] rounded-full"><i class="fa-solid fa-magnifying-glass"></i></button>
+        </div>
+    </header>
+
+    <!-- SLEEP TIMER MODAL -->
+    <div id="timer-modal" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-[#181818] border border-cyan-500/40 w-full max-w-sm rounded-2xl p-5 shadow-2xl flex flex-col space-y-4">
+            <div class="flex items-center justify-between border-b border-[#272727] pb-3">
+                <h3 class="text-sm font-bold text-cyan-400 flex items-center">
+                    <i class="fa-solid fa-stopwatch mr-2"></i> កំណត់ម៉ោងសម្រាក (Sleep Timer)
+                </h3>
+                <button id="close-timer-modal" class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <p class="text-xs text-gray-300">ជ្រើសរើសរយៈពេលដែលអ្នកចង់មើល ពេលរាប់ថយក្រោយដល់ 0 វានឹងបិទ App ស្វ័យប្រវត្តិដោយស្ងៀមស្ងាត់៖</p>
+            <div class="grid grid-cols-2 gap-2">
+                <button class="timer-option bg-[#222] hover:bg-cyan-600/30 border border-[#333] hover:border-cyan-500 py-2.5 rounded-xl text-xs font-semibold transition" data-mins="1">១ នាទី (តេស្ត)</button>
+                <button class="timer-option bg-[#222] hover:bg-cyan-600/30 border border-[#333] hover:border-cyan-500 py-2.5 rounded-xl text-xs font-semibold transition" data-mins="15">១៥ នាទី</button>
+                <button class="timer-option bg-[#222] hover:bg-cyan-600/30 border border-[#333] hover:border-cyan-500 py-2.5 rounded-xl text-xs font-semibold transition" data-mins="30">៣០ នាទី</button>
+                <button class="timer-option bg-[#222] hover:bg-cyan-600/30 border border-[#333] hover:border-cyan-500 py-2.5 rounded-xl text-xs font-semibold transition" data-mins="60">១ ម៉ោង</button>
+            </div>
+            <div class="flex items-center space-x-2 pt-2">
+                <input type="number" id="custom-mins-input" placeholder="ចំនួននាទីផ្សេងទៀត..." class="w-full bg-[#121212] text-white px-3 py-2 rounded-xl border border-[#333] text-xs focus:outline-none focus:border-cyan-500">
+                <button id="set-custom-timer" class="bg-cyan-600 hover:bg-cyan-500 text-white px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap">កំណត់</button>
+            </div>
+            <button id="cancel-timer" class="hidden w-full bg-red-600/20 hover:bg-red-600/40 text-red-400 border border-red-500/30 py-2 rounded-xl text-xs font-semibold transition">បោះបង់ម៉ោងកំណត់</button>
+        </div>
+    </div>
+
+    <!-- SEARCH & LINK INPUT BAR -->
+    <div id="search-bar-container" class="hidden px-4 py-3 bg-[#1f1f1f] border-b border-[#272727] space-y-2 z-40">
+        <div class="flex items-center space-x-2">
+            <input type="text" id="search-input" placeholder="ស្វែងរកចំណងជើងវីដេអូ..." class="w-full bg-[#121212] text-white px-4 py-2 rounded-full border border-[#3f3f3f] focus:outline-none focus:border-cyan-500 text-sm">
+            <button id="search-submit" class="bg-cyan-600 px-4 py-2 rounded-full text-sm font-semibold hover:bg-cyan-500 whitespace-nowrap">ស្វែងរក</button>
+        </div>
+        <div class="flex items-center space-x-2 pt-1">
+            <input type="text" id="custom-link-input" placeholder="ដាក់ Link YouTube (ឧ. https://youtu.be/...)" class="w-full bg-[#121212] text-white px-4 py-2 rounded-full border border-red-500/50 focus:outline-none focus:border-red-500 text-sm">
+            <button id="load-link-btn" class="bg-red-600 px-4 py-2 rounded-full text-sm font-semibold hover:bg-red-500 whitespace-nowrap">មើលវីដេអូ</button>
+        </div>
+    </div>
+
+    <!-- MAIN CONTAINER -->
+    <div class="flex flex-1 overflow-hidden relative">
+        <!-- SIDEBAR -->
+        <aside id="sidebar" class="w-64 bg-[#0f0f0f] border-r border-[#272727] flex flex-col py-2 px-3 overflow-y-auto no-scrollbar absolute md:relative z-40 h-full transition-transform duration-300 -translate-x-full md:translate-x-0">
+            <a href="#" id="nav-home" class="nav-link flex items-center space-x-6 px-3 py-2.5 rounded-xl bg-[#272727] text-white font-medium text-sm mb-1">
+                <i class="fa-solid fa-house w-6 text-lg"></i> <span>ទំព័រដើម</span>
+            </a>
+            <a href="#" id="nav-upload" class="nav-link flex items-center space-x-6 px-3 py-2.5 rounded-xl hover:bg-[#272727] text-cyan-400 font-medium text-sm mb-1">
+                <i class="fa-solid fa-cloud-arrow-up w-6 text-lg"></i> <span>បង្ហោះវីដេអូ</span>
+            </a>
+            <a href="#" id="nav-history" class="nav-link flex items-center space-x-6 px-3 py-2.5 rounded-xl hover:bg-[#272727] text-gray-300 font-medium text-sm mb-1">
+                <i class="fa-solid fa-clock-rotate-left w-6 text-lg"></i> <span>ប្រវត្តិធ្លាប់មើល</span>
+            </a>
+            <a href="#" id="nav-guide" class="nav-link flex items-center space-x-6 px-3 py-2.5 rounded-xl hover:bg-[#272727] text-gray-300 font-medium text-sm mb-1">
+                <i class="fa-solid fa-circle-question w-6 text-lg text-cyan-400"></i> <span>របៀបប្រើប្រាស់</span>
+            </a>
+            <hr class="border-[#272727] my-3">
+            <div class="px-3 text-xs text-gray-400 font-semibold mb-2">ព័ត៌មានកម្មវិធី</div>
+            <div class="px-3 py-2 text-xs text-cyan-400 font-medium">
+                <i class="fa-solid fa-globe mr-1.5"></i> សហគមន៍ចែករំលែក ១០០%
+            </div>
+            <div class="px-3 py-2 text-xs text-cyan-400 font-medium">
+                <i class="fa-solid fa-shield-halved mr-1.5"></i> បំបាត់ពាណិជ្ជកម្ម ១០០%
+            </div>
+        </aside>
+
+        <!-- CONTENT AREA -->
+        <main class="flex-1 overflow-y-auto p-4 bg-[#0f0f0f] pb-24">
+            
+            <!-- CATEGORY CHIPS -->
+            <div id="chips-container" class="flex space-x-2 overflow-x-auto no-scrollbar pb-3 mb-4">
+                <button class="cat-btn px-3 py-1.5 bg-white text-black text-xs font-semibold rounded-lg whitespace-nowrap" data-cat="all">ទាំងអស់</button>
+                <button class="cat-btn px-3 py-1.5 bg-[#272727] hover:bg-[#3f3f3f] text-white text-xs font-semibold rounded-lg whitespace-nowrap" data-cat="community">🌐 វីដេអូសហគមន៍ (Community)</button>
+                <button class="cat-btn px-3 py-1.5 bg-[#272727] hover:bg-[#3f3f3f] text-white text-xs font-semibold rounded-lg whitespace-nowrap" data-cat="movie">🎬 រឿងខ្មែរ/ចិន</button>
+                <button class="cat-btn px-3 py-1.5 bg-[#272727] hover:bg-[#3f3f3f] text-white text-xs font-semibold rounded-lg whitespace-nowrap" data-cat="anime">🎌 អានីមេ (Anime)</button>
+                <button class="cat-btn px-3 py-1.5 bg-[#272727] hover:bg-[#3f3f3f] text-white text-xs font-semibold rounded-lg whitespace-nowrap" data-cat="music">🎵 ចម្រៀង</button>
+            </div>
+
+            <!-- WATCH LAYOUT -->
+            <div id="player-section" class="mb-6 hidden grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-2">
+                    <div id="player-container" class="w-full aspect-video bg-black rounded-xl overflow-hidden relative shadow-lg">
+                        <iframe id="youtube-player" class="w-full h-full border-0" src="" allow="autoplay; picture-in-picture" allowfullscreen></iframe>
+                    </div>
+                    <div class="flex items-center justify-between mt-3 gap-2">
+                        <h2 id="video-title" class="text-base font-bold text-white line-clamp-1 flex-1">ចំណងជើងវីដេអូ</h2>
+                        <div class="flex items-center space-x-2">
+                            <button id="pip-btn" class="bg-[#272727] hover:bg-[#383838] border border-[#444] text-cyan-400 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition shadow-sm whitespace-nowrap">
+                                <i class="fa-solid fa-window-restore"></i> <span>អេក្រង់តូច (PiP)</span>
+                            </button>
+                            <button id="fullscreen-btn" class="bg-cyan-600 hover:bg-cyan-500 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition shadow-sm whitespace-nowrap">
+                                <i class="fa-solid fa-expand"></i> <span>ពេញអេក្រង់</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between mt-2 text-xs text-gray-400 border-b border-[#272727] pb-3">
+                        <span id="video-channel">Nami Official Channel</span>
+                        <button id="close-player" class="text-red-400 font-semibold hover:underline">បិទ Player</button>
+                    </div>
+                </div>
+
+                <div class="bg-[#181818] p-3 rounded-xl border border-[#272727] flex flex-col h-fit">
+                    <h4 class="text-xs font-bold text-cyan-400 uppercase tracking-wider mb-3 flex items-center">
+                        <i class="fa-solid fa-wand-magic-sparkles mr-1.5"></i> វីដេអូស្រដៀងគ្នា (Smart Match)
+                    </h4>
+                    <div id="related-videos-container" class="space-y-3 overflow-y-auto max-h-[400px] no-scrollbar"></div>
+                </div>
+            </div>
+
+            <!-- SECTION HEADING -->
+            <div class="flex items-center justify-between mb-3">
+                <h3 id="section-heading" class="text-sm font-bold text-gray-300"><i class="fa-solid fa-clapperboard text-cyan-400 mr-2"></i>រឿង និងវីដេអូបង្ហាញជូន</h3>
+                <button id="clear-history-btn" class="hidden text-xs text-red-400 hover:underline"><i class="fa-solid fa-trash-can mr-1"></i>លុបប្រវត្តិទាំងអស់</button>
+            </div>
+
+            <!-- MOVIES & VIDEOS GRID -->
+            <div id="video-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"></div>
+        </main>
+    </div>
+
+    <!-- AI ASSISTANT FLOATING MASCOT -->
+    <div id="ai-mascot-bar" class="fixed bottom-3 left-4 right-4 bg-[#1a1a1a]/95 backdrop-blur-md border border-cyan-500/40 p-2.5 rounded-2xl shadow-2xl z-40 flex items-center justify-between mascot-float">
+        <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-cyan-600 to-blue-500 flex items-center justify-center text-white text-lg shadow-md shrink-0 relative">
+                <i class="fa-solid fa-robot"></i>
+                <span class="absolute -top-1 -right-1 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-[#1a1a1a]"></span>
+            </div>
+            <div>
+                <div class="flex items-center space-x-1.5">
+                    <span class="text-xs font-bold text-cyan-400">Nami AI Assistant</span>
+                    <i class="fa-solid fa-circle-check text-cyan-400 text-[10px]"></i>
+                </div>
+                <p id="mascot-status" class="text-[11px] text-gray-300 line-clamp-1">មើលប្រវត្តិវីដេអូដែលធ្លាប់បានទស្សនា!</p>
+            </div>
+        </div>
+        <button id="mascot-toggle-btn" class="bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold px-3.5 py-2 rounded-xl transition shadow-md whitespace-nowrap">
+            <i class="fa-solid fa-clock-rotate-left mr-1"></i> ប្រវត្តិធ្លាប់មើល
+        </button>
+    </div>
+
+    <!-- POPUP MODAL FOR WATCH HISTORY ONLY -->
+    <div id="mascot-modal" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-[#181818] border border-cyan-500/40 w-full max-w-lg rounded-2xl p-4 flex flex-col max-h-[85vh]">
+            <div class="flex items-center justify-between border-b border-[#272727] pb-3 mb-3">
+                <div class="flex items-center space-x-2">
+                    <div class="w-8 h-8 rounded-full bg-cyan-600 flex items-center justify-center text-white text-sm">
+                        <i class="fa-solid fa-robot"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-bold text-cyan-400">ប្រវត្តិវីដេអូដែលធ្លាប់មើល (History)</h4>
+                        <p class="text-[10px] text-gray-400">បង្ហាញតែវីដេអូដែលអ្នកធ្លាប់បានចុចមើលប៉ុណ្ណោះ</p>
+                    </div>
+                </div>
+                <button id="close-modal" class="text-gray-400 hover:text-white p-1.5"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div id="mascot-suggestions-list" class="space-y-2.5 overflow-y-auto no-scrollbar flex-1 pr-1"></div>
+        </div>
+    </div>
+
+    <video id="pip-video-source" class="hidden" autoplay playsinline muted loop></video>
+
+    <script>
+        const defaultVideos = [
+            { id: "1", title: "រឿងភាគខេមរៈ ភាគទី០១ - Khmer Drama Series Ep 1", category: "movie", ytId: "LXb3EKWsInQ", duration: "45:20", channel: "Nami Movies", views: "180K" },
+            { id: "2", title: "រឿងចិនហុងកុងបុរាណ ពេញលេញ - Hong Kong Action Movie", category: "movie", ytId: "kJQP7kiw5Fk", duration: "1:32:10", channel: "Asia Cinema", views: "4.5B" },
+          
